@@ -65,11 +65,11 @@ module Plamo
   class PlamoRequest < FFI::Struct
     layout :scheme, :plamo_scheme,
       :version, :plamo_http_version,
-      :method, :pointer,
-      :path, :pointer,
-      :query, :pointer,
-      :header, :pointer,
-      :body, :pointer
+      :method, :plamo_string,
+      :path, :plamo_string,
+      :query, :plamo_http_query,
+      :header, :plamo_http_header,
+      :body, :plamo_byte_array
   end
 
   attach_function :plamo_request_new, [:plamo_scheme, :plamo_http_version, :string, :string, :plamo_http_query, :plamo_http_header, :plamo_byte_array], PlamoRequest.by_ref
@@ -78,8 +78,8 @@ module Plamo
   # PlamoResponse
   class PlamoResponse < FFI::Struct
     layout :status_code, :uint,
-      :header, :pointer,
-      :body, :pointer
+      :header, :plamo_http_header,
+      :body, :plamo_byte_array
   end
 
   attach_function :plamo_response_new, [], PlamoResponse.by_ref
