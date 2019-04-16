@@ -63,13 +63,13 @@ module Plamo
 
   # PlamoRequest
   class PlamoRequest < FFI::Struct
-    layout :scheme, :plamo_scheme
-    layout :version, :plamo_http_version
-    layout :method, :pointer
-    layout :path, :pointer
-    layout :query, :pointer
-    layout :header, :pointer
-    layout :body, :pointer
+    layout :scheme, :plamo_scheme,
+      :version, :plamo_http_version,
+      :method, :pointer,
+      :path, :pointer,
+      :query, :pointer,
+      :header, :pointer,
+      :body, :pointer
   end
 
   attach_function :plamo_request_new, [:plamo_scheme, :plamo_http_version, :string, :string, :plamo_http_query, :plamo_http_header, :plamo_byte_array], PlamoRequest.by_ref
@@ -77,9 +77,9 @@ module Plamo
 
   # PlamoResponse
   class PlamoResponse < FFI::Struct
-    layout :status_code, :uint
-    layout :header, :pointer
-    layout :body, :pointer
+    layout :status_code, :uint,
+      :header, :pointer,
+      :body, :pointer
   end
 
   attach_function :plamo_response_new, [], PlamoResponse.by_ref
@@ -87,8 +87,8 @@ module Plamo
 
   # PlamoMiddleware
   class PlamoMiddleware < FFI::Struct
-    layout :config, :pointer
-    layout :callback, :pointer
+    layout :config, :pointer,
+      :callback, :pointer
   end
 
   callback :plamo_middleware_new_callback, [:pointer, PlamoRequest.by_ref, PlamoResponse.by_ref], :bool
