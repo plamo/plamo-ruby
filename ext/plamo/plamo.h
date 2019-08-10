@@ -8,6 +8,7 @@
 #include "plamo_byte_array.h"
 #include "plamo_http_header.h"
 #include "plamo_http_query.h"
+#include "plamo_request.h"
 
 extern VALUE rb_mPlamo;
 
