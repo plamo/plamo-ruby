@@ -10,6 +10,7 @@
 #include "plamo_http_query.h"
 #include "plamo_request.h"
 #include "plamo_response.h"
+#include "plamo_middleware.h"
 
 extern VALUE rb_mPlamo;
 

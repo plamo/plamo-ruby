@@ -10,4 +10,5 @@ void Init_plamo(void) {
   Init_plamo_http_query();
   Init_plamo_request();
   Init_plamo_response();
+  Init_plamo_middleware();
 }
