@@ -1,6 +1,11 @@
 #ifndef PLAMO_H
-#define PLAMO_H 1
+#define PLAMO_H
 
-#include "ruby.h"
+#include <ruby.h>
+#include <ruby/thread.h>
+#include <libplamo.h>
+#include "plamo_string_array.h"
+
+extern VALUE rb_mPlamo;
 
 #endif /* PLAMO_H */
