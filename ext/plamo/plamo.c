@@ -11,4 +11,5 @@ void Init_plamo(void) {
   Init_plamo_request();
   Init_plamo_response();
   Init_plamo_middleware();
+  Init_plamo_app();
 }
