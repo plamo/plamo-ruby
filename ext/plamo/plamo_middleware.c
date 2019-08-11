@@ -15,7 +15,6 @@ typedef struct PlamoRbCallbackConfig {
 } PlamoRbCallbackConfig;
 
 typedef struct callback_t {
-  bool result;
   bool handled;
   pthread_mutex_t mutex;
   pthread_cond_t cond;
@@ -85,11 +84,12 @@ static void* plamo_callback(void *args) {
   pthread_mutex_destroy(&callback.mutex);
   pthread_cond_destroy(&callback.cond);
 
-  return (void*)callback.result;
+  return NULL;
 }
 
-static bool before_plamo_callback(const void *config, const PlamoRequest *plamo_request, PlamoResponse *plamo_response) {
-  return (bool)rb_thread_call_without_gvl(plamo_callback, (void*)rb_ary_new3(3, config, plamo_request, plamo_response), NULL, NULL);
+static void before_plamo_callback(const void *config, const PlamoRequest *plamo_request, PlamoResponse *plamo_response) {
+  rb_thread_call_without_gvl(plamo_callback, (void*)rb_ary_new3(3, config, plamo_request, plamo_response), NULL, NULL);
+  return;
 }
 
 static VALUE handle_callback(void *cb) {
@@ -107,8 +107,7 @@ static VALUE handle_callback(void *cb) {
   Data_Get_Struct(rb_plamo_response, Wrapper, plamo_response_wrapper);
   plamo_response_wrapper->inner = callback->plamo_response;
 
-  VALUE result = rb_proc_call(rb_proc, rb_ary_new3(3, rb_config, rb_plamo_request, rb_plamo_response));
-  callback->result = result == Qtrue;
+  rb_proc_call(rb_proc, rb_ary_new3(3, rb_config, rb_plamo_request, rb_plamo_response));
 
   pthread_mutex_lock(&callback->mutex);
   callback->handled = true;
