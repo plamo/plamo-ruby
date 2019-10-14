@@ -22,7 +22,12 @@ static VALUE initialize(VALUE self, VALUE rb_scheme, VALUE rb_version, VALUE rb_
                                  : sym_http_1_1 == rb_version ? PlamoHttpVersionHttp11
                                  : sym_http_1_0 == rb_version ? PlamoHttpVersionHttp10
                                  : PlamoHttpVersionHttp09;
-  const char *method = StringValueCStr(rb_method);
+  PlamoHttpMethod method;
+  if (RB_TYPE_P(rb_method, RUBY_T_FIXNUM)) {
+    method.defined_http_method = NUM2SIZET(rb_method);
+  } else {
+    method.undefined_http_method = StringValueCStr(rb_method);
+  }
   const char *path = StringValueCStr(rb_path);
   Wrapper *plamo_http_query_wrapper;
   Data_Get_Struct(rb_query, Wrapper, plamo_http_query_wrapper);
@@ -58,7 +63,28 @@ static VALUE version(VALUE self) {
 static VALUE method(VALUE self) {
   Wrapper *wrapper;
   Data_Get_Struct(self, Wrapper, wrapper);
-  return rb_str_new2(plamo_string_get_char(((PlamoRequest*)wrapper->inner)->method));
+  PlamoDefinedHttpMethod method = ((PlamoRequest*)wrapper->inner)->method.defined_http_method;
+  if (method == PLAMO_HTTP_METHOD_GET) {
+    return rb_str_new2("GET");
+  } else if (method == PLAMO_HTTP_METHOD_POST) {
+    return rb_str_new2("POST");
+  } else if (method == PLAMO_HTTP_METHOD_PUT) {
+    return rb_str_new2("PUT");
+  } else if (method == PLAMO_HTTP_METHOD_DELETE) {
+    return rb_str_new2("DELETE");
+  } else if (method == PLAMO_HTTP_METHOD_HEAD) {
+    return rb_str_new2("HEAD");
+  } else if (method == PLAMO_HTTP_METHOD_CONNECT) {
+    return rb_str_new2("CONNECT");
+  } else if (method == PLAMO_HTTP_METHOD_OPTIONS) {
+    return rb_str_new2("OPTIONS");
+  } else if (method == PLAMO_HTTP_METHOD_TRACE) {
+    return rb_str_new2("TRACE");
+  } else if (method == PLAMO_HTTP_METHOD_PATCH) {
+    return rb_str_new2("PATCH");
+  } else {
+    return rb_str_new2(((PlamoRequest*)wrapper->inner)->method.undefined_http_method);
+  }
 }
 
 static VALUE path(VALUE self) {
