@@ -5,7 +5,7 @@
 #include <ruby/thread.h>
 
 // This hack is reference the below post.
-// https://www.burgestrand.se//articles/asynchronous-callbacks-in-ruby-c-extensions/
+// https://www.burgestrand.se/articles/asynchronous-callbacks-in-ruby-c-extensions/
 
 VALUE rb_cPlamoMiddleware;
 
