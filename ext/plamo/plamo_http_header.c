@@ -45,7 +45,7 @@ static void execute_each(const char *key, const char *value) {
   rb_yield(rb_ary_new3(2, rb_str_new2(key), rb_str_new2(value)));
 }
 
-static VALUE each(VALUE self, VALUE key) {
+static VALUE each(VALUE self) {
   Wrapper *wrapper;
   Data_Get_Struct(self, Wrapper, wrapper);
   plamo_http_header_for_each(wrapper->inner, execute_each);
