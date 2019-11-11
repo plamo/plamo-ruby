@@ -41,12 +41,8 @@ static VALUE get(VALUE self, VALUE key) {
   }
 }
 
-static void execute_each(const char *key, PlamoStringArray *values) {
-  Wrapper *wrapper;
-  VALUE rb_plamo_string_array = Data_Wrap_Struct(rb_cPlamoStringArray, NULL, free, malloc(sizeof(Wrapper)));
-  Data_Get_Struct(rb_plamo_string_array, Wrapper, wrapper);
-  wrapper->inner = values;
-  rb_yield(rb_ary_new3(2, rb_str_new2(key), rb_plamo_string_array));
+static void execute_each(const char *key, const char *value) {
+  rb_yield(rb_ary_new3(2, rb_str_new2(key), rb_str_new2(value)));
 }
 
 static VALUE each(VALUE self, VALUE key) {
