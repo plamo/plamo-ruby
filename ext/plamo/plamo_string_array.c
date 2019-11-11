@@ -19,6 +19,12 @@ static VALUE initialize(VALUE self) {
   return self;
 }
 
+static VALUE length(VALUE self) {
+  Wrapper *wrapper;
+  Data_Get_Struct(self, Wrapper, wrapper);
+  return SIZET2NUM(plamo_string_array_length(wrapper->inner));
+}
+
 static VALUE push(VALUE self, VALUE rb_string) {
   Wrapper *wrapper;
   Data_Get_Struct(self, Wrapper, wrapper);
@@ -84,6 +90,8 @@ void Init_plamo_string_array(void) {
   rb_cPlamoStringArray = rb_define_class_under(rb_mPlamo, "StringArray", rb_cObject);
   rb_define_alloc_func(rb_cPlamoStringArray, allocate);
   rb_define_method(rb_cPlamoStringArray, "initialize", initialize, 0);
+  rb_define_method(rb_cPlamoStringArray, "length", length, 0);
+  rb_define_alias(rb_cPlamoStringArray, "size", "length");
   rb_define_method(rb_cPlamoStringArray, "push", push, 1);
   rb_define_method(rb_cPlamoStringArray, "first", first, 0);
   rb_define_method(rb_cPlamoStringArray, "last", last, 0);
@@ -91,4 +99,3 @@ void Init_plamo_string_array(void) {
   rb_define_method(rb_cPlamoStringArray, "each", each, 0);
   rb_define_method(rb_cPlamoStringArray, "delete_at", delete_at, 1);
 }
-
