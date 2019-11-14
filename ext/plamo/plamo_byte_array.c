@@ -22,7 +22,13 @@ static VALUE initialize(VALUE self, VALUE body) {
 static VALUE get_body(VALUE self) {
   Wrapper *wrapper;
   Data_Get_Struct(self, Wrapper, wrapper);
-  return rb_ary_new4(plamo_byte_array_get_body_size(wrapper->inner), (VALUE*)plamo_byte_array_get_body(wrapper->inner));
+  const size_t size = plamo_byte_array_get_body_size(wrapper->inner);
+  const unsigned char *body = plamo_byte_array_get_body(wrapper->inner);
+  VALUE rb_array = rb_ary_new2(size);
+  for (int i = 0; i < size; i++) {
+    rb_ary_store(rb_array, i, CHR2FIX(*(body + i)));
+  }
+  return rb_array;
 }
 
 static VALUE get_size(VALUE self) {
