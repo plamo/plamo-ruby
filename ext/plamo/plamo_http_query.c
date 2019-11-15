@@ -1,40 +1,45 @@
 #include "plamo.h"
-#include "wrapper.h"
 
 VALUE rb_cPlamoHttpQuery;
 
-static void deallocate(Wrapper *wrapper) {
-  plamo_http_query_destroy(wrapper->inner);
-  free(wrapper);
+static void deallocate(void *plamo_http_query) {
+  plamo_http_query_destroy(plamo_http_query);
 }
 
+const rb_data_type_t rb_plamo_http_query_type = {
+  "HttpQuery",
+  {
+    NULL,
+    deallocate,
+    NULL,
+  },
+  NULL,
+  NULL,
+  0,
+};
+
 static VALUE allocate(VALUE klass) {
-  return Data_Wrap_Struct(klass, NULL, deallocate, malloc(sizeof(Wrapper)));
+  return TypedData_Wrap_Struct(klass, &rb_plamo_http_query_type, NULL);
 }
 
 static VALUE initialize(VALUE self) {
-  Wrapper *wrapper;
-  Data_Get_Struct(self, Wrapper, wrapper);
-  wrapper->inner = plamo_http_query_new();
+  DATA_PTR(self) = plamo_http_query_new();
   return self;
 }
 
 static VALUE push(VALUE self, VALUE key, VALUE value) {
-  Wrapper *wrapper;
-  Data_Get_Struct(self, Wrapper, wrapper);
-  plamo_http_query_add(wrapper->inner, StringValueCStr(key), StringValueCStr(value));
+  PlamoHttpQuery *plamo_http_query;
+  TypedData_Get_Struct(self, PlamoHttpQuery, &rb_plamo_http_query_type, plamo_http_query);
+  plamo_http_query_add(plamo_http_query, StringValueCStr(key), StringValueCStr(value));
   return Qnil;
 }
 
 static VALUE get(VALUE self, VALUE key) {
-  Wrapper *wrapper;
-  Data_Get_Struct(self, Wrapper, wrapper);
-  PlamoStringArray *plamo_string_array = plamo_http_query_get(wrapper->inner, StringValueCStr(key));
+  PlamoHttpQuery *plamo_http_query;
+  TypedData_Get_Struct(self, PlamoHttpQuery, &rb_plamo_http_query_type, plamo_http_query);
+  PlamoStringArray *plamo_string_array = plamo_http_query_get(plamo_http_query, StringValueCStr(key));
   if (plamo_string_array != NULL) {
-    VALUE rb_plamo_string_array = Data_Wrap_Struct(rb_cPlamoStringArray, NULL, free, malloc(sizeof(Wrapper)));
-    Wrapper *wrapper2;
-    Data_Get_Struct(rb_plamo_string_array, Wrapper, wrapper2);
-    wrapper2->inner = plamo_string_array;
+    VALUE rb_plamo_string_array = TypedData_Wrap_Struct(rb_cPlamoStringArray, &rb_plamo_string_array_type, plamo_string_array);
     return rb_plamo_string_array;
   } else {
     return Qnil;
@@ -42,9 +47,9 @@ static VALUE get(VALUE self, VALUE key) {
 }
 
 static VALUE delete_at(VALUE self, VALUE key) {
-  Wrapper *wrapper;
-  Data_Get_Struct(self, Wrapper, wrapper);
-  if (plamo_http_query_remove(wrapper->inner, StringValueCStr(key))) {
+  PlamoHttpQuery *plamo_http_query;
+  TypedData_Get_Struct(self, PlamoHttpQuery, &rb_plamo_http_query_type, plamo_http_query);
+  if (plamo_http_query_remove(plamo_http_query, StringValueCStr(key))) {
     return Qtrue;
   } else {
     return Qfalse;

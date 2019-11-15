@@ -1,35 +1,40 @@
 #include "plamo.h"
-#include "wrapper.h"
 
 VALUE rb_cPlamoFormUrlencoded;
 
-static void deallocate(Wrapper *wrapper) {
-  plamo_form_urlencoded_destroy(wrapper->inner);
-  free(wrapper);
+static void deallocate(void *plamo_form_urlencoded) {
+  plamo_form_urlencoded_destroy(plamo_form_urlencoded);
 }
 
+static const rb_data_type_t rb_plamo_form_urlencoded_type = {
+  "FormUrlencoded",
+  {
+    NULL,
+    deallocate,
+    NULL,
+  },
+  NULL,
+  NULL,
+  0,
+};
+
 static VALUE allocate(VALUE klass) {
-  return Data_Wrap_Struct(klass, NULL, deallocate, malloc(sizeof(Wrapper)));
+  return TypedData_Wrap_Struct(klass, &rb_plamo_form_urlencoded_type, NULL);
 }
 
 static VALUE initialize(VALUE self, VALUE request) {
-  Wrapper *wrapper;
-  Data_Get_Struct(self, Wrapper, wrapper);
-  Wrapper *request_wrapper;
-  Data_Get_Struct(request, Wrapper, request_wrapper);
-  wrapper->inner = plamo_form_urlencoded_new(request_wrapper->inner);
+  PlamoRequest *plamo_request;
+  TypedData_Get_Struct(request, PlamoRequest, &rb_plamo_request_type, plamo_request);
+  DATA_PTR(self) = plamo_form_urlencoded_new(plamo_request);
   return self;
 }
 
 static VALUE get(VALUE self, VALUE key) {
-  Wrapper *wrapper;
-  Data_Get_Struct(self, Wrapper, wrapper);
-  PlamoStringArray *plamo_string_array = plamo_form_urlencoded_get(wrapper->inner, StringValueCStr(key));
+  PlamoFormUrlencoded *plamo_form_urlencoded;
+  TypedData_Get_Struct(self, PlamoFormUrlencoded, &rb_plamo_form_urlencoded_type, plamo_form_urlencoded);
+  PlamoStringArray *plamo_string_array = plamo_form_urlencoded_get(plamo_form_urlencoded, StringValueCStr(key));
   if (plamo_string_array != NULL) {
-    VALUE rb_plamo_string_array = Data_Wrap_Struct(rb_cPlamoStringArray, NULL, free, malloc(sizeof(Wrapper)));
-    Wrapper *wrapper2;
-    Data_Get_Struct(rb_plamo_string_array, Wrapper, wrapper2);
-    wrapper2->inner = plamo_string_array;
+    VALUE rb_plamo_string_array = TypedData_Wrap_Struct(rb_cPlamoStringArray, &rb_plamo_string_array_type, plamo_string_array);
     return rb_plamo_string_array;
   } else {
     return Qnil;
@@ -41,9 +46,9 @@ static void execute_each(const char *key, const char *value) {
 }
 
 static VALUE each(VALUE self) {
-  Wrapper *wrapper;
-  Data_Get_Struct(self, Wrapper, wrapper);
-  plamo_form_urlencoded_for_each(wrapper->inner, execute_each);
+  PlamoFormUrlencoded *plamo_form_urlencoded;
+  TypedData_Get_Struct(self, PlamoFormUrlencoded, &rb_plamo_form_urlencoded_type, plamo_form_urlencoded);
+  plamo_form_urlencoded_for_each(plamo_form_urlencoded, execute_each);
   return Qnil;
 }
 

@@ -1,16 +1,26 @@
 #include "plamo.h"
-#include "wrapper.h"
 
 VALUE rb_cPlamoFormDataField;
 
+const rb_data_type_t rb_plamo_form_data_field_type = {
+  "FormDataField",
+  {
+    NULL,
+    NULL,
+    NULL,
+  },
+  NULL,
+  NULL,
+  0,
+};
+
 static VALUE allocate(VALUE klass) {
-  return Data_Wrap_Struct(klass, NULL, free, malloc(sizeof(Wrapper)));
+  return TypedData_Wrap_Struct(klass, &rb_plamo_form_data_field_type, NULL);
 }
 
 static VALUE get_text(VALUE self) {
-  Wrapper *wrapper;
-  Data_Get_Struct(self, Wrapper, wrapper);
-  PlamoFormDataField *plamo_form_data_field = wrapper->inner;
+  PlamoFormDataField *plamo_form_data_field;
+  TypedData_Get_Struct(self, PlamoFormDataFile, &rb_plamo_form_data_field_type, plamo_form_data_field);
   if (plamo_form_data_field->text) {
     return rb_str_new2(plamo_string_get_char(plamo_form_data_field->text));
   } else {
@@ -19,15 +29,10 @@ static VALUE get_text(VALUE self) {
 }
 
 static VALUE get_file(VALUE self) {
-  Wrapper *wrapper;
-  Data_Get_Struct(self, Wrapper, wrapper);
-  PlamoFormDataField *plamo_form_data_field = wrapper->inner;
+  PlamoFormDataField *plamo_form_data_field;
+  TypedData_Get_Struct(self, PlamoFormDataFile, &rb_plamo_form_data_field_type, plamo_form_data_field);
   if (plamo_form_data_field->file) {
-    Wrapper *wrapper;
-    VALUE rb_plamo_form_data_file = Data_Wrap_Struct(rb_cPlamoFormDataFile, NULL, free, malloc(sizeof(Wrapper)));
-    Wrapper *plamo_form_data_file_wrapper;
-    Data_Get_Struct(rb_plamo_form_data_file, Wrapper, plamo_form_data_file_wrapper);
-    plamo_form_data_file_wrapper->inner = plamo_form_data_field->file;
+    VALUE rb_plamo_form_data_file = TypedData_Wrap_Struct(rb_cPlamoFormDataFile, &rb_plamo_form_data_file_type, plamo_form_data_field->file);
     return rb_plamo_form_data_file;
   } else {
     return Qnil;
@@ -35,9 +40,8 @@ static VALUE get_file(VALUE self) {
 }
 
 static VALUE is_text(VALUE self) {
-  Wrapper *wrapper;
-  Data_Get_Struct(self, Wrapper, wrapper);
-  PlamoFormDataField *plamo_form_data_field = wrapper->inner;
+  PlamoFormDataField *plamo_form_data_field;
+  TypedData_Get_Struct(self, PlamoFormDataFile, &rb_plamo_form_data_field_type, plamo_form_data_field);
   if (plamo_form_data_field->text) {
     return Qtrue;
   } else {
@@ -46,9 +50,8 @@ static VALUE is_text(VALUE self) {
 }
 
 static VALUE is_file(VALUE self) {
-  Wrapper *wrapper;
-  Data_Get_Struct(self, Wrapper, wrapper);
-  PlamoFormDataField *plamo_form_data_field = wrapper->inner;
+  PlamoFormDataField *plamo_form_data_field;
+  TypedData_Get_Struct(self, PlamoFormDataFile, &rb_plamo_form_data_field_type, plamo_form_data_field);
   if (plamo_form_data_field->file) {
     return Qtrue;
   } else {

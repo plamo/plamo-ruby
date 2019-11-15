@@ -1,41 +1,49 @@
 #include "plamo.h"
-#include "wrapper.h"
 
 VALUE rb_cPlamoStringArray;
 
-static void deallocate(Wrapper *wrapper) {
-  plamo_string_array_destroy(wrapper->inner);
-  free(wrapper);
+static void deallocate(void *plamo_string_array) {
+  plamo_string_array_destroy(plamo_string_array);
 }
 
+const rb_data_type_t rb_plamo_string_array_type = {
+  "StringArray",
+  {
+    NULL,
+    deallocate,
+    NULL,
+  },
+  NULL,
+  NULL,
+  0,
+};
+
 static VALUE allocate(VALUE klass) {
-  return Data_Wrap_Struct(klass, NULL, deallocate, malloc(sizeof(Wrapper)));
+  return TypedData_Wrap_Struct(klass, &rb_plamo_string_array_type, NULL);
 }
 
 static VALUE initialize(VALUE self) {
-  Wrapper *wrapper;
-  Data_Get_Struct(self, Wrapper, wrapper);
-  wrapper->inner = plamo_string_array_new();
+  DATA_PTR(self) = plamo_string_array_new();
   return self;
 }
 
 static VALUE length(VALUE self) {
-  Wrapper *wrapper;
-  Data_Get_Struct(self, Wrapper, wrapper);
-  return SIZET2NUM(plamo_string_array_length(wrapper->inner));
+  PlamoStringArray *plamo_string_array;
+  TypedData_Get_Struct(self, PlamoStringArray, &rb_plamo_string_array_type, plamo_string_array);
+  return SIZET2NUM(plamo_string_array_length(plamo_string_array));
 }
 
 static VALUE push(VALUE self, VALUE rb_string) {
-  Wrapper *wrapper;
-  Data_Get_Struct(self, Wrapper, wrapper);
-  plamo_string_array_add(wrapper->inner, StringValueCStr(rb_string));
+  PlamoStringArray *plamo_string_array;
+  TypedData_Get_Struct(self, PlamoStringArray, &rb_plamo_string_array_type, plamo_string_array);
+  plamo_string_array_add(plamo_string_array, StringValueCStr(rb_string));
   return Qnil;
 }
 
 static VALUE first(VALUE self) {
-  Wrapper *wrapper;
-  Data_Get_Struct(self, Wrapper, wrapper);
-  const char *str = plamo_string_array_get_first(wrapper->inner);
+  PlamoStringArray *plamo_string_array;
+  TypedData_Get_Struct(self, PlamoStringArray, &rb_plamo_string_array_type, plamo_string_array);
+  const char *str = plamo_string_array_get_first(plamo_string_array);
   if (str != NULL) {
     return rb_str_new2(str);
   } else {
@@ -44,9 +52,9 @@ static VALUE first(VALUE self) {
 }
 
 static VALUE last(VALUE self) {
-  Wrapper *wrapper;
-  Data_Get_Struct(self, Wrapper, wrapper);
-  const char *str = plamo_string_array_get_last(wrapper->inner);
+  PlamoStringArray *plamo_string_array;
+  TypedData_Get_Struct(self, PlamoStringArray, &rb_plamo_string_array_type, plamo_string_array);
+  const char *str = plamo_string_array_get_last(plamo_string_array);
   if (str != NULL) {
     return rb_str_new2(str);
   } else {
@@ -55,9 +63,9 @@ static VALUE last(VALUE self) {
 }
 
 static VALUE get_at(VALUE self, VALUE index) {
-  Wrapper *wrapper;
-  Data_Get_Struct(self, Wrapper, wrapper);
-  const char *str = plamo_string_array_get_at(wrapper->inner, FIX2ULONG(index));
+  PlamoStringArray *plamo_string_array;
+  TypedData_Get_Struct(self, PlamoStringArray, &rb_plamo_string_array_type, plamo_string_array);
+  const char *str = plamo_string_array_get_at(plamo_string_array, FIX2ULONG(index));
   if (str != NULL) {
     return rb_str_new2(str);
   } else {
@@ -70,16 +78,16 @@ static void execute_each(const char *str) {
 }
 
 static VALUE each(VALUE self) {
-  Wrapper *wrapper;
-  Data_Get_Struct(self, Wrapper, wrapper);
-  plamo_string_array_for_each(wrapper->inner, execute_each);
+  PlamoStringArray *plamo_string_array;
+  TypedData_Get_Struct(self, PlamoStringArray, &rb_plamo_string_array_type, plamo_string_array);
+  plamo_string_array_for_each(plamo_string_array, execute_each);
   return Qnil;
 }
 
 static VALUE delete_at(VALUE self, VALUE index) {
-  Wrapper *wrapper;
-  Data_Get_Struct(self, Wrapper, wrapper);
-  if (plamo_string_array_remove_at(wrapper->inner, FIX2ULONG(index))) {
+  PlamoStringArray *plamo_string_array;
+  TypedData_Get_Struct(self, PlamoStringArray, &rb_plamo_string_array_type, plamo_string_array);
+  if (plamo_string_array_remove_at(plamo_string_array, FIX2ULONG(index))) {
     return Qtrue;
   } else {
     return Qfalse;

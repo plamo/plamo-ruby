@@ -1,40 +1,45 @@
 #include "plamo.h"
-#include "wrapper.h"
 
 VALUE rb_cPlamoHttpHeader;
 
-static void deallocate(Wrapper *wrapper) {
-  plamo_http_header_destroy(wrapper->inner);
-  free(wrapper);
+static void deallocate(void *plamo_http_header) {
+  plamo_http_header_destroy(plamo_http_header);
 }
 
+const rb_data_type_t rb_plamo_http_header_type = {
+  "HttpHeader",
+  {
+    NULL,
+    deallocate,
+    NULL,
+  },
+  NULL,
+  NULL,
+  0,
+};
+
 static VALUE allocate(VALUE klass) {
-  return Data_Wrap_Struct(klass, NULL, deallocate, malloc(sizeof(Wrapper)));
+  return TypedData_Wrap_Struct(klass, &rb_plamo_http_header_type, NULL);
 }
 
 static VALUE initialize(VALUE self) {
-  Wrapper *wrapper;
-  Data_Get_Struct(self, Wrapper, wrapper);
-  wrapper->inner = plamo_http_header_new();
+  DATA_PTR(self) = plamo_http_header_new();
   return self;
 }
 
 static VALUE push(VALUE self, VALUE key, VALUE value) {
-  Wrapper *wrapper;
-  Data_Get_Struct(self, Wrapper, wrapper);
-  plamo_http_header_add(wrapper->inner, StringValueCStr(key), StringValueCStr(value));
+  PlamoHttpHeader *plamo_http_header;
+  TypedData_Get_Struct(self, PlamoHttpHeader, &rb_plamo_http_header_type, plamo_http_header);
+  plamo_http_header_add(plamo_http_header, StringValueCStr(key), StringValueCStr(value));
   return Qnil;
 }
 
 static VALUE get(VALUE self, VALUE key) {
-  Wrapper *wrapper;
-  Data_Get_Struct(self, Wrapper, wrapper);
-  PlamoStringArray *plamo_string_array = plamo_http_header_get(wrapper->inner, StringValueCStr(key));
+  PlamoHttpHeader *plamo_http_header;
+  TypedData_Get_Struct(self, PlamoHttpHeader, &rb_plamo_http_header_type, plamo_http_header);
+  PlamoStringArray *plamo_string_array = plamo_http_header_get(plamo_http_header, StringValueCStr(key));
   if (plamo_string_array != NULL) {
-    VALUE rb_plamo_string_array = Data_Wrap_Struct(rb_cPlamoStringArray, NULL, free, malloc(sizeof(Wrapper)));
-    Wrapper *wrapper2;
-    Data_Get_Struct(rb_plamo_string_array, Wrapper, wrapper2);
-    wrapper2->inner = plamo_string_array;
+    VALUE rb_plamo_string_array = TypedData_Wrap_Struct(rb_cPlamoStringArray, &rb_plamo_string_array_type, plamo_string_array);
     return rb_plamo_string_array;
   } else {
     return Qnil;
@@ -46,16 +51,16 @@ static void execute_each(const char *key, const char *value) {
 }
 
 static VALUE each(VALUE self) {
-  Wrapper *wrapper;
-  Data_Get_Struct(self, Wrapper, wrapper);
-  plamo_http_header_for_each(wrapper->inner, execute_each);
+  PlamoHttpHeader *plamo_http_header;
+  TypedData_Get_Struct(self, PlamoHttpHeader, &rb_plamo_http_header_type, plamo_http_header);
+  plamo_http_header_for_each(plamo_http_header, execute_each);
   return Qnil;
 }
 
 static VALUE delete_at(VALUE self, VALUE key) {
-  Wrapper *wrapper;
-  Data_Get_Struct(self, Wrapper, wrapper);
-  if (plamo_http_header_remove(wrapper->inner, StringValueCStr(key))) {
+  PlamoHttpHeader *plamo_http_header;
+  TypedData_Get_Struct(self, PlamoHttpHeader, &rb_plamo_http_header_type, plamo_http_header);
+  if (plamo_http_header_remove(plamo_http_header, StringValueCStr(key))) {
     return Qtrue;
   } else {
     return Qfalse;

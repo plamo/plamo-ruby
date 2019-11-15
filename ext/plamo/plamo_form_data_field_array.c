@@ -1,42 +1,47 @@
 #include "plamo.h"
-#include "wrapper.h"
 
 VALUE rb_cPlamoFormDataFieldArray;
 
+const rb_data_type_t rb_plamo_form_data_field_array_type = {
+  "FormDataFieldArray",
+  {
+    NULL,
+    NULL,
+    NULL,
+  },
+  NULL,
+  NULL,
+  0,
+};
+
 static VALUE allocate(VALUE klass) {
-  return Data_Wrap_Struct(klass, NULL, free, malloc(sizeof(Wrapper)));
+  return TypedData_Wrap_Struct(klass, &rb_plamo_form_data_field_array_type, NULL);
 }
 
 static VALUE length(VALUE self) {
-  Wrapper *wrapper;
-  Data_Get_Struct(self, Wrapper, wrapper);
-  return SIZET2NUM(plamo_form_data_field_array_length(wrapper->inner));
+  PlamoFormDataFieldArray *plamo_form_data_field_array;
+  TypedData_Get_Struct(self, PlamoFormDataFieldArray, &rb_plamo_form_data_field_array_type, plamo_form_data_field_array);
+  return SIZET2NUM(plamo_form_data_field_array_length(plamo_form_data_field_array));
 }
 
 static void execute_each(const PlamoFormDataField *value) {
-  Wrapper *wrapper;
-  VALUE rb_plamo_form_data_field = Data_Wrap_Struct(rb_cPlamoFormDataField, NULL, free, malloc(sizeof(Wrapper)));
-  Data_Get_Struct(rb_plamo_form_data_field, Wrapper, wrapper);
-  wrapper->inner = value;
+  VALUE rb_plamo_form_data_field = TypedData_Wrap_Struct(rb_cPlamoFormDataField, &rb_plamo_form_data_field_type, value);
   rb_yield(rb_plamo_form_data_field);
 }
 
 static VALUE each(VALUE self) {
-  Wrapper *wrapper;
-  Data_Get_Struct(self, Wrapper, wrapper);
-  plamo_form_data_field_array_for_each(wrapper->inner, execute_each);
+  PlamoFormDataFieldArray *plamo_form_data_field_array;
+  TypedData_Get_Struct(self, PlamoFormDataFieldArray, &rb_plamo_form_data_field_array_type, plamo_form_data_field_array);
+  plamo_form_data_field_array_for_each(plamo_form_data_field_array, execute_each);
   return Qnil;
 }
 
 static VALUE get_at(VALUE self, VALUE index) {
-  Wrapper *wrapper;
-  Data_Get_Struct(self, Wrapper, wrapper);
-  const PlamoFormDataField *plamo_form_data_field = plamo_form_data_field_array_get_at(wrapper->inner, NUM2SIZET(index));
+  PlamoFormDataFieldArray *plamo_form_data_field_array;
+  TypedData_Get_Struct(self, PlamoFormDataFieldArray, &rb_plamo_form_data_field_array_type, plamo_form_data_field_array);
+  const PlamoFormDataField *plamo_form_data_field = plamo_form_data_field_array_get_at(plamo_form_data_field_array, NUM2SIZET(index));
   if (plamo_form_data_field) {
-    VALUE rb_plamo_form_data_field = Data_Wrap_Struct(rb_cPlamoFormDataField, NULL, free, malloc(sizeof(Wrapper)));
-    Wrapper *plamo_form_data_field_wrapper;
-    Data_Get_Struct(rb_plamo_form_data_field, Wrapper, plamo_form_data_field_wrapper);
-    plamo_form_data_field_wrapper->inner = plamo_form_data_field;
+    VALUE rb_plamo_form_data_field = TypedData_Wrap_Struct(rb_cPlamoFormDataField, &rb_plamo_form_data_field_type, plamo_form_data_field);
     return rb_plamo_form_data_field;
   } else {
     return Qnil;
@@ -44,14 +49,11 @@ static VALUE get_at(VALUE self, VALUE index) {
 }
 
 static VALUE get_first(VALUE self) {
-  Wrapper *wrapper;
-  Data_Get_Struct(self, Wrapper, wrapper);
-  const PlamoFormDataField *plamo_form_data_field = plamo_form_data_field_array_get_first(wrapper->inner);
+  PlamoFormDataFieldArray *plamo_form_data_field_array;
+  TypedData_Get_Struct(self, PlamoFormDataFieldArray, &rb_plamo_form_data_field_array_type, plamo_form_data_field_array);
+  const PlamoFormDataField *plamo_form_data_field = plamo_form_data_field_array_get_first(plamo_form_data_field_array);
   if (plamo_form_data_field) {
-    VALUE rb_plamo_form_data_field = Data_Wrap_Struct(rb_cPlamoFormDataField, NULL, free, malloc(sizeof(Wrapper)));
-    Wrapper *plamo_form_data_field_wrapper;
-    Data_Get_Struct(rb_plamo_form_data_field, Wrapper, plamo_form_data_field_wrapper);
-    plamo_form_data_field_wrapper->inner = plamo_form_data_field;
+    VALUE rb_plamo_form_data_field = TypedData_Wrap_Struct(rb_cPlamoFormDataField, &rb_plamo_form_data_field_type, plamo_form_data_field);
     return rb_plamo_form_data_field;
   } else {
     return Qnil;
@@ -59,14 +61,11 @@ static VALUE get_first(VALUE self) {
 }
 
 static VALUE get_last(VALUE self) {
-  Wrapper *wrapper;
-  Data_Get_Struct(self, Wrapper, wrapper);
-  const PlamoFormDataField *plamo_form_data_field = plamo_form_data_field_array_get_last(wrapper->inner);
+  PlamoFormDataFieldArray *plamo_form_data_field_array;
+  TypedData_Get_Struct(self, PlamoFormDataFieldArray, &rb_plamo_form_data_field_array_type, plamo_form_data_field_array);
+  const PlamoFormDataField *plamo_form_data_field = plamo_form_data_field_array_get_last(plamo_form_data_field_array);
   if (plamo_form_data_field) {
-    VALUE rb_plamo_form_data_field = Data_Wrap_Struct(rb_cPlamoFormDataField, NULL, free, malloc(sizeof(Wrapper)));
-    Wrapper *plamo_form_data_field_wrapper;
-    Data_Get_Struct(rb_plamo_form_data_field, Wrapper, plamo_form_data_field_wrapper);
-    plamo_form_data_field_wrapper->inner = plamo_form_data_field;
+    VALUE rb_plamo_form_data_field = TypedData_Wrap_Struct(rb_cPlamoFormDataField, &rb_plamo_form_data_field_type, plamo_form_data_field);
     return rb_plamo_form_data_field;
   } else {
     return Qnil;

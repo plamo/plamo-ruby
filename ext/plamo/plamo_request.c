@@ -1,22 +1,30 @@
 #include "plamo.h"
-#include "wrapper.h"
 
 VALUE rb_cPlamoRequest;
 
 static VALUE sym_http, sym_https, sym_http_2_0, sym_http_1_1, sym_http_1_0, sym_http_0_9;
 
-static void deallocate(Wrapper *wrapper) {
-  plamo_request_destroy(wrapper->inner);
-  free(wrapper);
+static void deallocate(void *plamo_request) {
+  plamo_request_destroy(plamo_request);
 }
 
+const rb_data_type_t rb_plamo_request_type = {
+  "Request",
+  {
+    NULL,
+    deallocate,
+    NULL,
+  },
+  NULL,
+  NULL,
+  0,
+};
+
 static VALUE allocate(VALUE klass) {
-  return Data_Wrap_Struct(klass, NULL, deallocate, malloc(sizeof(Wrapper)));
+  return TypedData_Wrap_Struct(klass, &rb_plamo_request_type, NULL);
 }
 
 static VALUE initialize(VALUE self, VALUE rb_scheme, VALUE rb_version, VALUE rb_method, VALUE rb_path, VALUE rb_query, VALUE rb_header, VALUE rb_body) {
-  Wrapper *wrapper;
-  Data_Get_Struct(self, Wrapper, wrapper);
   const PlamoScheme scheme = sym_http == rb_scheme ? PlamoSchemeHttp : PlamoSchemeHttps;
   const PlamoHttpVersion version = sym_http_2_0 == rb_version ? PlamoHttpVersionHttp20
                                  : sym_http_1_1 == rb_version ? PlamoHttpVersionHttp11
@@ -29,26 +37,26 @@ static VALUE initialize(VALUE self, VALUE rb_scheme, VALUE rb_version, VALUE rb_
     method.undefined_http_method = StringValueCStr(rb_method);
   }
   const char *path = StringValueCStr(rb_path);
-  Wrapper *plamo_http_query_wrapper;
-  Data_Get_Struct(rb_query, Wrapper, plamo_http_query_wrapper);
-  Wrapper *plamo_http_header_wrapper;
-  Data_Get_Struct(rb_header, Wrapper, plamo_http_header_wrapper);
-  Wrapper *plamo_byte_array_wrapper;
-  Data_Get_Struct(rb_body, Wrapper, plamo_byte_array_wrapper);
-  wrapper->inner = plamo_request_new(scheme, version, method, path, plamo_http_query_wrapper->inner, plamo_http_header_wrapper->inner, plamo_byte_array_wrapper->inner);
+  PlamoHttpQuery *plamo_http_query;
+  TypedData_Get_Struct(rb_query, PlamoHttpQuery, &rb_plamo_http_query_type, plamo_http_query);
+  PlamoHttpHeader *plamo_http_header;
+  TypedData_Get_Struct(rb_header, PlamoHttpHeader, &rb_plamo_http_header_type, plamo_http_header);
+  PlamoByteArray *plamo_byte_array;
+  TypedData_Get_Struct(rb_body, PlamoByteArray, &rb_plamo_byte_array_type, plamo_byte_array);
+  DATA_PTR(self) = plamo_request_new(scheme, version, method, path, plamo_http_query, plamo_http_header, plamo_byte_array);
   return self;
 }
 
 static VALUE scheme(VALUE self) {
-  Wrapper *wrapper;
-  Data_Get_Struct(self, Wrapper, wrapper);
-  return ((PlamoRequest*)wrapper->inner)->scheme == PlamoSchemeHttp ? sym_http : sym_https;
+  PlamoRequest *plamo_request;
+  TypedData_Get_Struct(self, PlamoRequest, &rb_plamo_request_type, plamo_request);
+  return plamo_request->scheme == PlamoSchemeHttp ? sym_http : sym_https;
 }
 
 static VALUE version(VALUE self) {
-  Wrapper *wrapper;
-  Data_Get_Struct(self, Wrapper, wrapper);
-  switch (((PlamoRequest*)wrapper->inner)->version) {
+  PlamoRequest *plamo_request;
+  TypedData_Get_Struct(self, PlamoRequest, &rb_plamo_request_type, plamo_request);
+  switch (plamo_request->version) {
     case PlamoHttpVersionHttp20:
       return sym_http_2_0;
     case PlamoHttpVersionHttp11:
@@ -61,9 +69,9 @@ static VALUE version(VALUE self) {
 }
 
 static VALUE method(VALUE self) {
-  Wrapper *wrapper;
-  Data_Get_Struct(self, Wrapper, wrapper);
-  PlamoDefinedHttpMethod method = ((PlamoRequest*)wrapper->inner)->method.defined_http_method;
+  PlamoRequest *plamo_request;
+  TypedData_Get_Struct(self, PlamoRequest, &rb_plamo_request_type, plamo_request);
+  PlamoDefinedHttpMethod method = plamo_request->method.defined_http_method;
   if (method == PLAMO_HTTP_METHOD_GET) {
     return rb_str_new2("GET");
   } else if (method == PLAMO_HTTP_METHOD_POST) {
@@ -83,43 +91,34 @@ static VALUE method(VALUE self) {
   } else if (method == PLAMO_HTTP_METHOD_PATCH) {
     return rb_str_new2("PATCH");
   } else {
-    return rb_str_new2(((PlamoRequest*)wrapper->inner)->method.undefined_http_method);
+    return rb_str_new2(plamo_request->method.undefined_http_method);
   }
 }
 
 static VALUE path(VALUE self) {
-  Wrapper *wrapper;
-  Data_Get_Struct(self, Wrapper, wrapper);
-  return rb_str_new2(plamo_string_get_char(((PlamoRequest*)wrapper->inner)->path));
+  PlamoRequest *plamo_request;
+  TypedData_Get_Struct(self, PlamoRequest, &rb_plamo_request_type, plamo_request);
+  return rb_str_new2(plamo_string_get_char(plamo_request->path));
 }
 
 static VALUE query(VALUE self) {
-  Wrapper *wrapper;
-  Data_Get_Struct(self, Wrapper, wrapper);
-  VALUE rb_plamo_http_query = Data_Wrap_Struct(rb_cPlamoHttpQuery, NULL, free, malloc(sizeof(Wrapper)));
-  Wrapper *plamo_http_query_wrapper;
-  Data_Get_Struct(rb_plamo_http_query, Wrapper, plamo_http_query_wrapper);
-  plamo_http_query_wrapper->inner = ((PlamoRequest*)wrapper->inner)->query;
+  PlamoRequest *plamo_request;
+  TypedData_Get_Struct(self, PlamoRequest, &rb_plamo_request_type, plamo_request);
+  VALUE rb_plamo_http_query = TypedData_Wrap_Struct(rb_cPlamoHttpQuery, &rb_plamo_http_query_type, plamo_request->query);
   return rb_plamo_http_query;
 }
 
 static VALUE header(VALUE self) {
-  Wrapper *wrapper;
-  Data_Get_Struct(self, Wrapper, wrapper);
-  VALUE rb_plamo_http_header = Data_Wrap_Struct(rb_cPlamoHttpHeader, NULL, free, malloc(sizeof(Wrapper)));
-  Wrapper *plamo_http_header_wrapper;
-  Data_Get_Struct(rb_plamo_http_header, Wrapper, plamo_http_header_wrapper);
-  plamo_http_header_wrapper->inner = ((PlamoRequest*)wrapper->inner)->header;
+  PlamoRequest *plamo_request;
+  TypedData_Get_Struct(self, PlamoRequest, &rb_plamo_request_type, plamo_request);
+  VALUE rb_plamo_http_header = TypedData_Wrap_Struct(rb_cPlamoHttpHeader, &rb_plamo_http_header_type, plamo_request->header);
   return rb_plamo_http_header;
 }
 
 static VALUE body(VALUE self) {
-  Wrapper *wrapper;
-  Data_Get_Struct(self, Wrapper, wrapper);
-  VALUE rb_plamo_byte_array = Data_Wrap_Struct(rb_cPlamoByteArray, NULL, free, malloc(sizeof(Wrapper)));
-  Wrapper *plamo_byte_array_wrapper;
-  Data_Get_Struct(rb_plamo_byte_array, Wrapper, plamo_byte_array_wrapper);
-  plamo_byte_array_wrapper->inner = ((PlamoRequest*)wrapper->inner)->body;
+  PlamoRequest *plamo_request;
+  TypedData_Get_Struct(self, PlamoRequest, &rb_plamo_request_type, plamo_request);
+  VALUE rb_plamo_byte_array = TypedData_Wrap_Struct(rb_cPlamoByteArray, &rb_plamo_byte_array_type, plamo_request->body);
   return rb_plamo_byte_array;
 }
 

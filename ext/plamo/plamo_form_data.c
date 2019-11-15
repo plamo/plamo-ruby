@@ -1,56 +1,58 @@
 #include "plamo.h"
-#include "wrapper.h"
 
 VALUE rb_cPlamoFormData;
 
-static void deallocate(Wrapper *wrapper) {
-  plamo_form_data_destroy(wrapper->inner);
-  free(wrapper);
+static void deallocate(void *plamo_form_data) {
+  plamo_form_data_destroy(plamo_form_data);
 }
 
+static const rb_data_type_t rb_plamo_form_data_type = {
+  "FormData",
+  {
+    NULL,
+    deallocate,
+    NULL,
+  },
+  NULL,
+  NULL,
+  0,
+};
+
 static VALUE allocate(VALUE klass) {
-  return Data_Wrap_Struct(klass, NULL, deallocate, malloc(sizeof(Wrapper)));
+  return TypedData_Wrap_Struct(klass, &rb_plamo_form_data_type, NULL);
 }
 
 static VALUE initialize(VALUE self, VALUE rb_plamo_request) {
-  Wrapper *wrapper;
-  Data_Get_Struct(self, Wrapper, wrapper);
-  Wrapper *plamo_request_wrapper;
-  Data_Get_Struct(rb_plamo_request, Wrapper, plamo_request_wrapper);
-  PlamoFormData *plamo_form_data = plamo_form_data_new(plamo_request_wrapper->inner);
+  PlamoRequest *plamo_request;
+  TypedData_Get_Struct(rb_plamo_request, PlamoRequest, &rb_plamo_request_type, plamo_request);
+  PlamoFormData *plamo_form_data = plamo_form_data_new(plamo_request);
   if (plamo_form_data == NULL) {
     return Qnil;
   }
-  wrapper->inner = plamo_form_data;
+  DATA_PTR(self) = plamo_form_data;
   return self;
 }
 
 static void execute_each(const char *key, const PlamoFormDataField *value) {
-  Wrapper *wrapper;
-  VALUE rb_plamo_form_data_field = Data_Wrap_Struct(rb_cPlamoFormDataField, NULL, free, malloc(sizeof(Wrapper)));
-  Data_Get_Struct(rb_plamo_form_data_field, Wrapper, wrapper);
-  wrapper->inner = value;
+  VALUE rb_plamo_form_data_field = TypedData_Wrap_Struct(rb_cPlamoFormDataField, &rb_plamo_form_data_field_type, value);
   rb_yield(rb_ary_new3(2, rb_str_new2(key), rb_plamo_form_data_field));
 }
 
 static VALUE each(VALUE self) {
-  Wrapper *wrapper;
-  Data_Get_Struct(self, Wrapper, wrapper);
-  plamo_form_data_for_each(wrapper->inner, execute_each);
+  PlamoFormData *plamo_form_data;
+  TypedData_Get_Struct(self, PlamoFormData, &rb_plamo_form_data_type, plamo_form_data);
+  plamo_form_data_for_each(plamo_form_data, execute_each);
   return Qnil;
 }
 
 static VALUE get(VALUE self, VALUE key) {
-  Wrapper *wrapper;
-  Data_Get_Struct(self, Wrapper, wrapper);
-  PlamoFormDataFieldArray *plamo_form_data_field_array = plamo_form_data_get(wrapper->inner, StringValueCStr(key));
+  PlamoFormData *plamo_form_data;
+  TypedData_Get_Struct(self, PlamoFormData, &rb_plamo_form_data_type, plamo_form_data);
+  PlamoFormDataFieldArray *plamo_form_data_field_array = plamo_form_data_get(plamo_form_data, StringValueCStr(key));
   if (plamo_form_data_field_array == NULL) {
     return Qnil;
   }
-  VALUE rb_plamo_form_data_field_array = Data_Wrap_Struct(rb_cPlamoFormDataFieldArray, NULL, free, malloc(sizeof(Wrapper)));
-  Wrapper *plamo_form_data_field_array_wrapper;
-  Data_Get_Struct(rb_plamo_form_data_field_array, Wrapper, plamo_form_data_field_array_wrapper);
-  plamo_form_data_field_array_wrapper->inner = plamo_form_data_field_array;
+  VALUE rb_plamo_form_data_field_array = TypedData_Wrap_Struct(rb_cPlamoFormDataFieldArray, &rb_plamo_form_data_field_array_type, plamo_form_data_field_array);
   return rb_plamo_form_data_field_array;
 }
 

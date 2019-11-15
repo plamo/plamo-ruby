@@ -1,16 +1,27 @@
 #include "plamo.h"
-#include "wrapper.h"
 
 VALUE rb_cPlamoFormDataFile;
 
+const rb_data_type_t rb_plamo_form_data_file_type = {
+  "FormDataFile",
+  {
+    NULL,
+    NULL,
+    NULL,
+  },
+  NULL,
+  NULL,
+  0,
+};
+
 static VALUE allocate(VALUE klass) {
-  return Data_Wrap_Struct(klass, NULL, free, malloc(sizeof(Wrapper)));
+  return TypedData_Wrap_Struct(klass, &rb_plamo_form_data_file_type, NULL);
 }
 
 static VALUE get_content_type(VALUE self) {
-  Wrapper *wrapper;
-  Data_Get_Struct(self, Wrapper, wrapper);
-  const char *str = plamo_form_data_file_get_content_type(wrapper->inner);
+  PlamoFormDataFile *plamo_form_data_file;
+  TypedData_Get_Struct(self, PlamoFormDataFile, &rb_plamo_form_data_file_type, plamo_form_data_file);
+  const char *str = plamo_form_data_file_get_content_type(plamo_form_data_file);
   if (str != NULL) {
     return rb_str_new2(str);
   } else {
@@ -19,9 +30,9 @@ static VALUE get_content_type(VALUE self) {
 }
 
 static VALUE get_file_name(VALUE self) {
-  Wrapper *wrapper;
-  Data_Get_Struct(self, Wrapper, wrapper);
-  const char *str = plamo_form_data_file_get_file_name(wrapper->inner);
+  PlamoFormDataFile *plamo_form_data_file;
+  TypedData_Get_Struct(self, PlamoFormDataFile, &rb_plamo_form_data_file_type, plamo_form_data_file);
+  const char *str = plamo_form_data_file_get_file_name(plamo_form_data_file);
   if (str != NULL) {
     return rb_str_new2(str);
   } else {
@@ -30,10 +41,10 @@ static VALUE get_file_name(VALUE self) {
 }
 
 static VALUE get_body(VALUE self) {
-  Wrapper *wrapper;
-  Data_Get_Struct(self, Wrapper, wrapper);
-  const size_t size = plamo_form_data_file_get_body_size(wrapper->inner);
-  const unsigned char *body = plamo_form_data_file_get_body(wrapper->inner);
+  PlamoFormDataFile *plamo_form_data_file;
+  TypedData_Get_Struct(self, PlamoFormDataFile, &rb_plamo_form_data_file_type, plamo_form_data_file);
+  const size_t size = plamo_form_data_file_get_body_size(plamo_form_data_file);
+  const unsigned char *body = plamo_form_data_file_get_body(plamo_form_data_file);
   VALUE rb_array = rb_ary_new2(size);
   for (int i = 0; i < size; i++) {
     rb_ary_store(rb_array, i, CHR2FIX(*(body + i)));
@@ -42,9 +53,9 @@ static VALUE get_body(VALUE self) {
 }
 
 static VALUE get_body_size(VALUE self) {
-  Wrapper *wrapper;
-  Data_Get_Struct(self, Wrapper, wrapper);
-  return SIZET2NUM(plamo_form_data_file_get_body_size(wrapper->inner));
+  PlamoFormDataFile *plamo_form_data_file;
+  TypedData_Get_Struct(self, PlamoFormDataFile, &rb_plamo_form_data_file_type, plamo_form_data_file);
+  return SIZET2NUM(plamo_form_data_file_get_body_size(plamo_form_data_file));
 }
 
 void Init_plamo_form_data_file(void) {

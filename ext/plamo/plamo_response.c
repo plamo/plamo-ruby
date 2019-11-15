@@ -1,55 +1,57 @@
 #include "plamo.h"
-#include "wrapper.h"
 
 VALUE rb_cPlamoResponse;
 
-static void deallocate(Wrapper *wrapper) {
-  plamo_response_destroy(wrapper->inner);
-  free(wrapper);
+static void deallocate(void *plamo_response) {
+  plamo_response_destroy(plamo_response);
 }
 
+const rb_data_type_t rb_plamo_response_type = {
+  "Response",
+  {
+    NULL,
+    deallocate,
+    NULL,
+  },
+  NULL,
+  NULL,
+  0,
+};
+
 static VALUE allocate(VALUE klass) {
-  return Data_Wrap_Struct(klass, NULL, deallocate, malloc(sizeof(Wrapper)));
+  return TypedData_Wrap_Struct(klass, &rb_plamo_response_type, NULL);
 }
 
 static VALUE initialize(VALUE self) {
-  Wrapper *wrapper;
-  Data_Get_Struct(self, Wrapper, wrapper);
-  wrapper->inner = plamo_response_new();
+  DATA_PTR(self) = plamo_response_new();
   return self;
 }
 
 static VALUE status_code(VALUE self) {
-  Wrapper *wrapper;
-  Data_Get_Struct(self, Wrapper, wrapper);
-  return UINT2NUM(((PlamoResponse*)wrapper->inner)->status_code);
+  PlamoResponse *plamo_response;
+  TypedData_Get_Struct(self, PlamoResponse, &rb_plamo_response_type, plamo_response);
+  return UINT2NUM(plamo_response->status_code);
 }
 
 static VALUE set_status_code(VALUE self, VALUE code) {
-  Wrapper *wrapper;
-  Data_Get_Struct(self, Wrapper, wrapper);
-  ((PlamoResponse*)wrapper->inner)->status_code = FIX2UINT(code);
+  PlamoResponse *plamo_response;
+  TypedData_Get_Struct(self, PlamoResponse, &rb_plamo_response_type, plamo_response);
+  plamo_response->status_code = FIX2UINT(code);
   return code;
 }
 
 static VALUE header(VALUE self) {
-  Wrapper *wrapper;
-  Data_Get_Struct(self, Wrapper, wrapper);
-  VALUE rb_plamo_http_header = Data_Wrap_Struct(rb_cPlamoHttpHeader, NULL, free, malloc(sizeof(Wrapper)));
-  Wrapper *plamo_http_header_wrapper;
-  Data_Get_Struct(rb_plamo_http_header, Wrapper, plamo_http_header_wrapper);
-  plamo_http_header_wrapper->inner = ((PlamoResponse*)wrapper->inner)->header;
+  PlamoResponse *plamo_response;
+  TypedData_Get_Struct(self, PlamoResponse, &rb_plamo_response_type, plamo_response);
+  VALUE rb_plamo_http_header = TypedData_Wrap_Struct(rb_cPlamoHttpHeader, &rb_plamo_http_header_type, plamo_response->header);
   return rb_plamo_http_header;
 }
 
 static VALUE body(VALUE self) {
-  Wrapper *wrapper;
-  Data_Get_Struct(self, Wrapper, wrapper);
-  if (((PlamoResponse*)wrapper->inner)->body != NULL) {
-    VALUE rb_plamo_byte_array = Data_Wrap_Struct(rb_cPlamoByteArray, NULL, free, malloc(sizeof(Wrapper)));
-    Wrapper *plamo_byte_array_wrapper;
-    Data_Get_Struct(rb_plamo_byte_array, Wrapper, plamo_byte_array_wrapper);
-    plamo_byte_array_wrapper->inner = ((PlamoResponse*)wrapper->inner)->body;
+  PlamoResponse *plamo_response;
+  TypedData_Get_Struct(self, PlamoResponse, &rb_plamo_response_type, plamo_response);
+  if (plamo_response->body != NULL) {
+    VALUE rb_plamo_byte_array = TypedData_Wrap_Struct(rb_cPlamoByteArray, &rb_plamo_byte_array_type, plamo_response->body);
     return rb_plamo_byte_array;
   } else {
     return Qnil;
@@ -57,12 +59,11 @@ static VALUE body(VALUE self) {
 }
 
 static VALUE set_body(VALUE self, VALUE rb_body) {
-  Wrapper *wrapper;
-  Data_Get_Struct(self, Wrapper, wrapper);
-
+  PlamoResponse *plamo_response;
+  TypedData_Get_Struct(self, PlamoResponse, &rb_plamo_response_type, plamo_response);
   if (strcmp("String", rb_class2name(rb_obj_class(rb_body))) == 0) {
     struct RString *rstring = RSTRING(rb_body);
-    ((PlamoResponse*)wrapper->inner)->body = plamo_byte_array_new(RSTRING_PTR(rstring), RSTRING_LEN(rstring));
+    plamo_response->body = plamo_byte_array_new(RSTRING_PTR(rstring), RSTRING_LEN(rstring));
   } else {
     VALUE *array = RARRAY_PTR(rb_body);
     size_t len = RARRAY_LEN(rb_body);
@@ -70,10 +71,9 @@ static VALUE set_body(VALUE self, VALUE rb_body) {
     for (size_t i = 0; i < len; i++) {
       buf[i] = NUM2CHR(array[i]);
     }
-    ((PlamoResponse*)wrapper->inner)->body = plamo_byte_array_new(buf, len);
+    plamo_response->body = plamo_byte_array_new(buf, len);
     free(array);
   }
-
   return self;
 }
 

@@ -1,46 +1,47 @@
 #include "plamo.h"
-#include "wrapper.h"
 
 VALUE rb_cPlamoApp;
 
-static void deallocate(Wrapper *wrapper) {
-  plamo_app_destroy(wrapper->inner);
-  free(wrapper);
+static void deallocate(void *plamo_app) {
+  plamo_app_destroy(plamo_app);
 }
 
+const rb_data_type_t rb_plamo_app_type = {
+  "App",
+  {
+    NULL,
+    deallocate,
+    NULL,
+  },
+  NULL,
+  NULL,
+  0,
+};
+
 static VALUE allocate(VALUE klass) {
-  return Data_Wrap_Struct(klass, NULL, deallocate, malloc(sizeof(Wrapper)));
+  return TypedData_Wrap_Struct(klass, &rb_plamo_app_type, NULL);
 }
 
 static VALUE initialize(VALUE self) {
-  Wrapper *wrapper;
-  Data_Get_Struct(self, Wrapper, wrapper);
-  wrapper->inner = plamo_app_new();
+  DATA_PTR(self) = plamo_app_new();
   return self;
 }
 
 static VALUE push_middleware(VALUE self, VALUE rb_plamo_middleware) {
-  Wrapper *wrapper;
-  Data_Get_Struct(self, Wrapper, wrapper);
-  Wrapper *plamo_middleware_wrapper;
-  Data_Get_Struct(rb_plamo_middleware, Wrapper, plamo_middleware_wrapper);
-  plamo_app_add_middleware(wrapper->inner, plamo_middleware_wrapper->inner);
+  PlamoApp *plamo_app;
+  TypedData_Get_Struct(self, PlamoApp, &rb_plamo_app_type, plamo_app);
+  PlamoMiddleware *plamo_middleware;
+  TypedData_Get_Struct(rb_plamo_middleware, PlamoMiddleware, &rb_plamo_middleware_type, plamo_middleware);
+  plamo_app_add_middleware(plamo_app, plamo_middleware);
   return Qnil;
 }
 
 static VALUE execute(VALUE self, VALUE rb_plamo_request) {
-  Wrapper *wrapper;
-  Data_Get_Struct(self, Wrapper, wrapper);
-
-  Wrapper *plamo_request_wrapper;
-  Data_Get_Struct(rb_plamo_request, Wrapper, plamo_request_wrapper);
-
-  PlamoResponse *response = plamo_app_execute(wrapper->inner, plamo_request_wrapper->inner);
-  VALUE rb_plamo_response = Data_Wrap_Struct(rb_cPlamoResponse, NULL, free, malloc(sizeof(Wrapper)));
-  Wrapper *plamo_response_wrapper;
-  Data_Get_Struct(rb_plamo_response, Wrapper, plamo_response_wrapper);
-  plamo_response_wrapper->inner = response;
-
+  PlamoApp *plamo_app;
+  TypedData_Get_Struct(self, PlamoApp, &rb_plamo_app_type, plamo_app);
+  PlamoRequest *plamo_request;
+  TypedData_Get_Struct(self, PlamoRequest, &rb_plamo_request_type, plamo_request);
+  VALUE rb_plamo_response = TypedData_Wrap_Struct(rb_cPlamoResponse, &rb_plamo_response_type, plamo_app_execute(plamo_app, plamo_request));
   return rb_plamo_response;
 }
 

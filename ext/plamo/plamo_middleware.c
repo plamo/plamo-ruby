@@ -1,5 +1,4 @@
 #include "plamo.h"
-#include "wrapper.h"
 #include <stdbool.h>
 #include <pthread.h>
 #include <ruby/thread.h>
@@ -46,13 +45,24 @@ static callback_t* g_callback_queue_pop(void) {
   return callback;
 }
 
-static void deallocate(Wrapper *wrapper) {
-  plamo_middleware_destroy((PlamoMiddleware*)wrapper->inner);
-  free(wrapper);
+static void deallocate(void *plamo_middleware) {
+  plamo_middleware_destroy(plamo_middleware);
 }
 
+const rb_data_type_t rb_plamo_middleware_type = {
+  "Middleware",
+  {
+    NULL,
+    deallocate,
+    NULL,
+  },
+  NULL,
+  NULL,
+  0,
+};
+
 static VALUE allocate(VALUE klass) {
-  return Data_Wrap_Struct(klass, NULL, deallocate, malloc(sizeof(Wrapper)));
+  return TypedData_Wrap_Struct(klass, &rb_plamo_middleware_type, NULL);
 }
 
 static void* plamo_callback(void *args) {
@@ -98,14 +108,8 @@ static VALUE handle_callback(void *cb) {
   VALUE rb_config = callback->config->config;
   VALUE rb_proc = callback->config->callback;
 
-  VALUE rb_plamo_request = Data_Wrap_Struct(rb_cPlamoRequest, NULL, free, malloc(sizeof(Wrapper)));
-  Wrapper *plamo_request_wrapper;
-  Data_Get_Struct(rb_plamo_request, Wrapper, plamo_request_wrapper);
-  plamo_request_wrapper->inner = (PlamoRequest*)callback->plamo_request;
-  VALUE rb_plamo_response = Data_Wrap_Struct(rb_cPlamoResponse, NULL, free, malloc(sizeof(Wrapper)));
-  Wrapper *plamo_response_wrapper;
-  Data_Get_Struct(rb_plamo_response, Wrapper, plamo_response_wrapper);
-  plamo_response_wrapper->inner = callback->plamo_response;
+  VALUE rb_plamo_request = TypedData_Wrap_Struct(rb_cPlamoRequest, &rb_plamo_request_type, (PlamoRequest*)callback->plamo_request);
+  VALUE rb_plamo_response = TypedData_Wrap_Struct(rb_cPlamoResponse, &rb_plamo_response_type, callback->plamo_response);
 
   rb_proc_call(rb_proc, rb_ary_new3(3, rb_config, rb_plamo_request, rb_plamo_response));
 
@@ -158,13 +162,10 @@ static VALUE event_thread(void *_) {
 }
 
 static VALUE initialize(VALUE self, VALUE rb_config, VALUE rb_callback) {
-  Wrapper *wrapper;
-  Data_Get_Struct(self, Wrapper, wrapper);
   PlamoRbCallbackConfig *plamo_rb_calback_config = malloc(sizeof(PlamoRbCallbackConfig));
   plamo_rb_calback_config->config = rb_config;
   plamo_rb_calback_config->callback = rb_callback;
-  wrapper->inner = plamo_middleware_new(plamo_rb_calback_config, before_plamo_callback);
-
+  DATA_PTR(self) = plamo_middleware_new(plamo_rb_calback_config, before_plamo_callback);
   return self;
 }
 
