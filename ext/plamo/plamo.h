@@ -11,6 +11,10 @@
 #include "plamo_request.h"
 #include "plamo_response.h"
 #include "plamo_form_urlencoded.h"
+#include "plamo_form_data_file.h"
+#include "plamo_form_data_field.h"
+#include "plamo_form_data_field_array.h"
+#include "plamo_form_data.h"
 #include "plamo_middleware.h"
 #include "plamo_app.h"
 
