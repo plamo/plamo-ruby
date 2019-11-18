@@ -32,9 +32,10 @@ static VALUE initialize(VALUE self, VALUE request) {
 static VALUE get(VALUE self, VALUE key) {
   PlamoFormUrlencoded *plamo_form_urlencoded;
   TypedData_Get_Struct(self, PlamoFormUrlencoded, &rb_plamo_form_urlencoded_type, plamo_form_urlencoded);
-  PlamoStringArray *plamo_string_array = plamo_form_urlencoded_get(plamo_form_urlencoded, StringValueCStr(key));
+  const PlamoStringArray *plamo_string_array = plamo_form_urlencoded_get(plamo_form_urlencoded, StringValueCStr(key));
   if (plamo_string_array != NULL) {
-    VALUE rb_plamo_string_array = TypedData_Wrap_Struct(rb_cPlamoStringArray, &rb_plamo_string_array_type, plamo_string_array);
+    VALUE rb_plamo_string_array = TypedData_Wrap_Struct(rb_cPlamoStringArray, &rb_plamo_string_array_type, (PlamoStringArray*)plamo_string_array);
+    OBJ_FREEZE(rb_plamo_string_array);
     return rb_plamo_string_array;
   } else {
     return Qnil;

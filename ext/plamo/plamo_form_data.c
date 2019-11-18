@@ -34,7 +34,8 @@ static VALUE initialize(VALUE self, VALUE rb_plamo_request) {
 }
 
 static void execute_each(const char *key, const PlamoFormDataField *value) {
-  VALUE rb_plamo_form_data_field = TypedData_Wrap_Struct(rb_cPlamoFormDataField, &rb_plamo_form_data_field_type, value);
+  VALUE rb_plamo_form_data_field = TypedData_Wrap_Struct(rb_cPlamoFormDataField, &rb_plamo_form_data_field_type, (PlamoFormDataField*)value);
+  OBJ_FREEZE(rb_plamo_form_data_field);
   rb_yield(rb_ary_new3(2, rb_str_new2(key), rb_plamo_form_data_field));
 }
 
@@ -48,11 +49,12 @@ static VALUE each(VALUE self) {
 static VALUE get(VALUE self, VALUE key) {
   PlamoFormData *plamo_form_data;
   TypedData_Get_Struct(self, PlamoFormData, &rb_plamo_form_data_type, plamo_form_data);
-  PlamoFormDataFieldArray *plamo_form_data_field_array = plamo_form_data_get(plamo_form_data, StringValueCStr(key));
+  const PlamoFormDataFieldArray *plamo_form_data_field_array = plamo_form_data_get(plamo_form_data, StringValueCStr(key));
   if (plamo_form_data_field_array == NULL) {
     return Qnil;
   }
-  VALUE rb_plamo_form_data_field_array = TypedData_Wrap_Struct(rb_cPlamoFormDataFieldArray, &rb_plamo_form_data_field_array_type, plamo_form_data_field_array);
+  VALUE rb_plamo_form_data_field_array = TypedData_Wrap_Struct(rb_cPlamoFormDataFieldArray, &rb_plamo_form_data_field_array_type, (PlamoFormDataFieldArray*)plamo_form_data_field_array);
+  OBJ_FREEZE(rb_plamo_form_data_field_array);
   return rb_plamo_form_data_field_array;
 }
 
