@@ -49,6 +49,7 @@ static VALUE get_body(VALUE self) {
   for (int i = 0; i < size; i++) {
     rb_ary_store(rb_array, i, CHR2FIX(*(body + i)));
   }
+  OBJ_FREEZE(rb_array);
   return rb_array;
 }
 

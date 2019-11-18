@@ -36,6 +36,10 @@ static VALUE length(VALUE self) {
 static VALUE push(VALUE self, VALUE rb_string) {
   PlamoStringArray *plamo_string_array;
   TypedData_Get_Struct(self, PlamoStringArray, &rb_plamo_string_array_type, plamo_string_array);
+  if (OBJ_FROZEN(self)) {
+    rb_exc_raise(rb_eFrozenError);
+    return Qnil;
+  }
   plamo_string_array_add(plamo_string_array, StringValueCStr(rb_string));
   return Qnil;
 }

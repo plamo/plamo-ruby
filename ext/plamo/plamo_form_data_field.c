@@ -33,6 +33,7 @@ static VALUE get_file(VALUE self) {
   TypedData_Get_Struct(self, PlamoFormDataField, &rb_plamo_form_data_field_type, plamo_form_data_field);
   if (plamo_form_data_field->file) {
     VALUE rb_plamo_form_data_file = TypedData_Wrap_Struct(rb_cPlamoFormDataFile, &rb_plamo_form_data_file_type, plamo_form_data_field->file);
+    OBJ_FREEZE(rb_plamo_form_data_file);
     return rb_plamo_form_data_file;
   } else {
     return Qnil;
