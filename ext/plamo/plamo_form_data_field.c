@@ -20,7 +20,7 @@ static VALUE allocate(VALUE klass) {
 
 static VALUE get_text(VALUE self) {
   PlamoFormDataField *plamo_form_data_field;
-  TypedData_Get_Struct(self, PlamoFormDataFile, &rb_plamo_form_data_field_type, plamo_form_data_field);
+  TypedData_Get_Struct(self, PlamoFormDataField, &rb_plamo_form_data_field_type, plamo_form_data_field);
   if (plamo_form_data_field->text) {
     return rb_str_new2(plamo_string_get_char(plamo_form_data_field->text));
   } else {
@@ -30,7 +30,7 @@ static VALUE get_text(VALUE self) {
 
 static VALUE get_file(VALUE self) {
   PlamoFormDataField *plamo_form_data_field;
-  TypedData_Get_Struct(self, PlamoFormDataFile, &rb_plamo_form_data_field_type, plamo_form_data_field);
+  TypedData_Get_Struct(self, PlamoFormDataField, &rb_plamo_form_data_field_type, plamo_form_data_field);
   if (plamo_form_data_field->file) {
     VALUE rb_plamo_form_data_file = TypedData_Wrap_Struct(rb_cPlamoFormDataFile, &rb_plamo_form_data_file_type, plamo_form_data_field->file);
     return rb_plamo_form_data_file;
@@ -41,7 +41,7 @@ static VALUE get_file(VALUE self) {
 
 static VALUE is_text(VALUE self) {
   PlamoFormDataField *plamo_form_data_field;
-  TypedData_Get_Struct(self, PlamoFormDataFile, &rb_plamo_form_data_field_type, plamo_form_data_field);
+  TypedData_Get_Struct(self, PlamoFormDataField, &rb_plamo_form_data_field_type, plamo_form_data_field);
   if (plamo_form_data_field->text) {
     return Qtrue;
   } else {
@@ -51,7 +51,7 @@ static VALUE is_text(VALUE self) {
 
 static VALUE is_file(VALUE self) {
   PlamoFormDataField *plamo_form_data_field;
-  TypedData_Get_Struct(self, PlamoFormDataFile, &rb_plamo_form_data_field_type, plamo_form_data_field);
+  TypedData_Get_Struct(self, PlamoFormDataField, &rb_plamo_form_data_field_type, plamo_form_data_field);
   if (plamo_form_data_field->file) {
     return Qtrue;
   } else {
