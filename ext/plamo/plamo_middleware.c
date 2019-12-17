@@ -144,7 +144,7 @@ static void stop_waiting_for_callback_signal(void *w) {
   pthread_mutex_unlock(&g_callback_mutex);
 }
 
-static VALUE event_thread(void *_) {
+VALUE plamo_rb_event_thread(void *_) {
   callback_waiting_t waiting = {
     .callback = NULL,
     .abort = false
@@ -173,5 +173,4 @@ void Init_plamo_middleware(void) {
   rb_cPlamoMiddleware = rb_define_class_under(rb_mPlamo, "Middleware", rb_cObject);
   rb_define_alloc_func(rb_cPlamoMiddleware, allocate);
   rb_define_method(rb_cPlamoMiddleware, "initialize", initialize, 2);
-  rb_thread_create(event_thread, NULL);
 }
